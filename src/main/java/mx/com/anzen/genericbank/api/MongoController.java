@@ -6,9 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,13 +30,29 @@ public class MongoController {
 	@Autowired
 	private MongoService mongo;
 	
+	private static Logger log = Logger.getLogger(MongoController.class);
+	
 	@RequestMapping(value="/layout")
-    public Map<String,Object> layout(@RequestBody JSONObject  json ) throws UnknownHostException{ 
+ public Map<String,Object> layout(@RequestBody JSONObject  json ) { 
 		
 		Map<String,Object> map=new HashMap();
-		map.put("fileDefinition.idFileType",json.get("IdFileType").toString()); 
-		Map<String,Object> mapResult=mongo.consulta("BancaGenerica",map); 
-		  
+		Map<String,Object> mapResult=null;
+		try{
+			map.put("fileDefinition.idFileType",json.get("IdFileType")); 
+			mapResult=mongo.consulta("ADBancaGenerica",map); 
+			  
+		}catch (HttpMessageNotReadableException e) {
+			System.out.println("exception");
+			log.info("Error: "+e.getMessage());
+			mapResult.put("CodigoError: ",100);
+			mapResult.put("Error: ",e.getMessage()); 
+			 
+		}catch (Exception e) {
+			log.info("Error: "+e.getMessage());
+			mapResult.put("CodigoError: ",100);
+			mapResult.put("Error: ",e.getMessage()); 
+		}
+		
         return mapResult;
     }
 	
